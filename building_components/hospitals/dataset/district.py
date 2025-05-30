@@ -5,7 +5,7 @@ import pandas as pd
 district_codes = pd.read_csv('taipei_district_code.csv', dtype=str)
 
 # 2. 定義資料夾
-input_dir = 'flitered_Taipei'
+input_dir = 'filtered_Taipei'
 output_dir = 'enriched_Taipei'
 os.makedirs(output_dir, exist_ok=True)
 

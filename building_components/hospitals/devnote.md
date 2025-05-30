@@ -27,9 +27,13 @@ Refering [government dataset schema](https://schema.nat.gov.tw/lists/157), the m
 The comparision table is "縣市代碼" with a code of "RSCD0102.txt". I've saved and convert this table as dataset/city_code.csv.
 
 Using dataset/filter.py to filter rows of health facilities in Taipei (as well as New Taipei).
+After running this .py, there will be new datasets under dataset/filtered_Taipei.
 
 ## Add district information (currently done Taipei city only)
+Using dataset/district.py to add district information to the dataset. I used the address column to interpret the district information. 
+After running this .py, there will be new datasets under dataset/enriched_Taipei.
 
+Note that dataset of New Taipei city has not been added district information.
 
 
 
