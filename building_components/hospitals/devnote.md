@@ -33,7 +33,15 @@ After running this .py, there will be new datasets under dataset/filtered_Taipei
 Using dataset/district.py to add district information to the dataset. I used the address column to interpret the district information. 
 After running this .py, there will be new datasets under dataset/enriched_Taipei.
 
-Note that dataset of New Taipei city has not been added district information.
+*Note that dataset of New Taipei city HAS NOT been added district information.*
+
+
+# Build database
+The docs recommends Airflow and API to automatically update data. But it also suggests that we should use pandas for testing. We don't necessarly need to apply auto-update feature in the beginning.
+
+Thus, I created a folder pandas_testing for this version of the component (with pandas).
+
+Using pandas/testing/count.py to calculate the density of health facilities in Taipei by districts. Save the calculation result as pandas/testing/taipei_hospital_density.csv.
 
 
 
