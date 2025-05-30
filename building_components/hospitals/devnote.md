@@ -26,6 +26,10 @@ In those datasets, there's a column named "縣市別代碼".
 Refering [government dataset schema](https://schema.nat.gov.tw/lists/157), the meaning of this code can be found at [戶役政資訊系統資料代碼內容清單](https://www.ris.gov.tw/documents/html/5/1/168.html).
 The comparision table is "縣市代碼" with a code of "RSCD0102.txt". I've saved and convert this table as dataset/city_code.csv.
 
+Using dataset/filter.py to filter rows of health facilities in Taipei (as well as New Taipei).
+
+## Add district information (currently done Taipei city only)
+
 
 
 
