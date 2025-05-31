@@ -1,10 +1,11 @@
-FROM golang:1.21.3-alpine3.18 as builder
+FROM golang:1.23.0-alpine as builder
 WORKDIR /go/src/app
 COPY . .
-RUN go build 
+# builder stage
+RUN CGO_ENABLED=0 go build -o TaipeiCityDashboardBE -ldflags="-s -w"
+
 
 FROM scratch
 COPY --from=builder /go/src/app/TaipeiCityDashboardBE /app/
 WORKDIR /app
-EXPOSE 8080
-CMD ["./TaipeiCityDashboardBE"]
+ENTRYPOINT ["./TaipeiCityDashboardBE"]

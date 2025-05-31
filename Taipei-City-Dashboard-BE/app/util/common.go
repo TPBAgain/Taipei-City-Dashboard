@@ -14,6 +14,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +48,6 @@ func MergeAndRemoveDuplicates(slices ...[]int) []int {
 	return result
 }
 
-
 // GetTime is a utility function to get the time from the header and set default values.
 func GetTime(c *gin.Context) (string, string, error) {
 	timefrom := c.Query("timefrom")
@@ -74,4 +75,89 @@ func GetTime(c *gin.Context) (string, string, error) {
 	}
 
 	return timefrom, timeto, nil
+}
+
+func formatStringArray(arr []string) string {
+	quoted := make([]string, len(arr))
+	for i, v := range arr {
+		quoted[i] = fmt.Sprintf("\"%s\"", strings.ReplaceAll(v, "\"", "\\\""))
+	}
+	return fmt.Sprintf("'{%s}'", strings.Join(quoted, ","))
+}
+
+func formatIntArray(arr []int) string {
+	parts := make([]string, len(arr))
+	for i, v := range arr {
+		parts[i] = fmt.Sprintf("%d", v)
+	}
+	return fmt.Sprintf("'{%s}'", strings.Join(parts, ","))
+}
+
+func GenerateInsertSQLFromStruct(table string, item interface{}) string {
+	v := reflect.ValueOf(item)
+	t := reflect.TypeOf(item)
+
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+		t = t.Elem()
+	}
+
+	columns := []string{}
+	values := []string{}
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+
+		// Get column name from `gorm:"column:xxx"`
+		col := fieldType.Tag.Get("gorm")
+		if strings.Contains(col, "column:") {
+			col = strings.Split(strings.Split(col, "column:")[1], ";")[0]
+		}
+		if col == "" {
+			col = fieldType.Name
+		}
+		columns = append(columns, col)
+
+		// Format values
+		if !field.IsValid() || (field.Kind() == reflect.Ptr && field.IsNil()) {
+			values = append(values, "NULL")
+			continue
+		}
+
+		switch field.Kind() {
+		case reflect.String:
+			values = append(values, fmt.Sprintf("'%s'", strings.ReplaceAll(field.String(), "'", "''")))
+		case reflect.Ptr:
+			deref := field.Elem()
+			if deref.Kind() == reflect.String {
+				values = append(values, fmt.Sprintf("'%s'", strings.ReplaceAll(deref.String(), "'", "''")))
+			} else {
+				values = append(values, "NULL")
+			}
+		case reflect.Int, reflect.Int64:
+			values = append(values, fmt.Sprintf("%d", field.Int()))
+		case reflect.Slice:
+			if field.Type().Elem().Kind() == reflect.Uint8 {
+				// []byte → assume it's JSON
+				values = append(values, fmt.Sprintf("'%s'", strings.ReplaceAll(string(field.Bytes()), "'", "''")))
+			} else {
+				values = append(values, "NULL")
+			}
+		case reflect.Struct:
+			if field.Type().String() == "time.Time" {
+				values = append(values, fmt.Sprintf("'%s'", field.Interface().(time.Time).Format("2006-01-02 15:04:05")))
+			} else {
+				values = append(values, "NULL")
+			}
+		default:
+			values = append(values, "NULL")
+		}
+	}
+
+	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s);",
+		table,
+		strings.Join(columns, ", "),
+		strings.Join(values, ", "),
+	)
 }

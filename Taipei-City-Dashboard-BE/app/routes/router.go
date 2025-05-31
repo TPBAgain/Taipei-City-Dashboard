@@ -38,6 +38,7 @@ func ConfigureRoutes() {
 	configureIncidentRoutes()
 	// configureWsRoutes()
 	configureContributorRoutes()
+	configureTestRoutes()
 }
 
 func configureAuthRoutes() {
@@ -177,3 +178,13 @@ func configureContributorRoutes() {
 // 		wsRoutes.PUT("/write/", controllers.WriteMap)
 // 	}
 // }
+
+func configureTestRoutes() {
+	testRoutes := RouterGroup.Group("/test")
+	{
+		testRoutes.GET("/", controllers.TestGet)
+		testRoutes.GET("/:index", controllers.DumpTableHandler)
+		testRoutes.GET("/component/:index", controllers.DumpComponentHandler)
+	}
+
+}

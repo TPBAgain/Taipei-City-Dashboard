@@ -11,11 +11,10 @@ Developed By Taipei Urban Intelligence Center 2023-2024
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"TaipeiCityDashboardBE/app"
 	"TaipeiCityDashboardBE/logs"
+	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
