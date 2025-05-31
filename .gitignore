@@ -26,7 +26,6 @@ firebase.json
 *.cache
 
 dist.tar.gz
-*.sh
 
 # Binaries for programs and plugins
 *.exe

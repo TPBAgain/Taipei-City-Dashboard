@@ -102,6 +102,7 @@ type ComponentMap struct {
 	Property []byte  `gorm:"column:property"`
 }
 
+// GET /api/v1/test/component/:index
 // DumpComponentHandler dumps rows whose "index" matches the URL param
 // using pg_dump rather than reflection/GORM marshalling.
 func DumpComponentHandler(c *gin.Context) {

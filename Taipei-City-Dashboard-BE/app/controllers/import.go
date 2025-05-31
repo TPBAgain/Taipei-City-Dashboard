@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// POST /api/v1/test/upload with .sql
 func UploadSQLFileHandler(c *gin.Context) {
 	file, err := c.FormFile("sql_file")
 	if err != nil {
