@@ -1,9 +1,11 @@
 package controllers
 
 import (
-	"TaipeiCityDashboardBE/app/models"
-	"TaipeiCityDashboardBE/app/util"
 	"TaipeiCityDashboardBE/global"
+	"TaipeiCityDashboardBE/logs"
+	"bufio"
+	"bytes"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	"io"
@@ -49,8 +51,11 @@ func DumpTableHandler(c *gin.Context) {
 	c.Header("Content-Type", "application/sql")
 	c.Status(http.StatusOK)
 
-	// Safely stream output
-	if _, err := io.Copy(c.Writer, stdout); err != nil {
+	// Prepend the header string
+	header := bytes.NewReader([]byte("-- db: data\n"))
+	combinedReader := io.MultiReader(header, stdout)
+
+	if _, err := io.Copy(c.Writer, combinedReader); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to stream dump", "details": err.Error()})
 		return
 	}
@@ -97,40 +102,89 @@ type ComponentMap struct {
 	Property []byte  `gorm:"column:property"`
 }
 
+// DumpComponentHandler dumps rows whose "index" matches the URL param
+// using pg_dump rather than reflection/GORM marshalling.
 func DumpComponentHandler(c *gin.Context) {
-	index := c.Param("index")
+	index := c.Param("index") // e.g. "ebus_percent"
 
-	var insertSql []string
+	dbCfg := global.PostgresManager // or fetch from viper/env
 
-	// 1. Components (can be many)
-	var components []Component
-	if err := models.DBManager.Table("components").
-		Where("index = ?", index).Find(&components).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch components", "details": err.Error()})
+	host := dbCfg.Host // "localhost" or service name
+	port := dbCfg.Port // "5432"
+	user := dbCfg.User
+	pass := dbCfg.Password
+	name := dbCfg.DBName // "dashboard_manager"
+
+	tables := []string{
+		"components",
+		"query_charts",
+		"component_maps",
+	}
+
+	var sqlChunks []string
+	sqlChunks = append(sqlChunks, "-- db: manager\n")
+
+	for _, tbl := range tables {
+		dump, err := pgDumpSingleTable(host, port, user, pass, name, tbl, index)
+		if err != nil {
+			// If one table is missing, skip it but log the error.
+			logs.Warn("pg_dump %s failed: %v", tbl, err)
+			continue
+		}
+		filtered := filterSQLLines(dump, index)
+		if len(filtered) > 0 {
+			sqlChunks = append(sqlChunks, strings.Join(filtered, "\n"))
+		}
+	}
+
+	if len(sqlChunks) == 1 { // only header => nothing dumped
+		c.JSON(http.StatusNotFound,
+			gin.H{"error": "no rows found for index", "index": index})
 		return
 	}
-	for _, comp := range components {
-		insertSql = append(insertSql, util.GenerateInsertSQLFromStruct("components", comp))
-	}
 
-	// 2. QueryCharts (can be many)
-	var charts []QueryChart
-	if err := models.DBManager.Table("query_charts").
-		Where("index = ?", index).Find(&charts).Error; err == nil {
-		for _, chart := range charts {
-			insertSql = append(insertSql, util.GenerateInsertSQLFromStruct("query_charts", chart))
+	fileName := fmt.Sprintf("%s_dump.sql", index)
+	c.Header("Content-Disposition",
+		fmt.Sprintf(`attachment; filename="%s"`, fileName))
+	c.Data(http.StatusOK, "application/sql",
+		[]byte(strings.Join(sqlChunks, "\n\n")))
+}
+
+// pgDumpSingleTable executes pg_dump for exactly one table + where clause
+func pgDumpSingleTable(host, port, user, pass, dbName, table, index string) (string, error) {
+	args := []string{
+		"-h", host,
+		"-p", port,
+		"-U", user,
+		"--data-only",
+		"--column-inserts",
+		"-t", table,
+		dbName,
+	}
+	cmd := exec.Command("pg_dump", args...)
+	// Inject password so pg_dump won’t prompt
+	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", pass))
+
+	var out bytes.Buffer
+	var errBuf bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &errBuf
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("%w: %s", err, errBuf.String())
+	}
+	return out.String(), nil
+}
+
+func filterSQLLines(sqlDump string, target string) []string {
+	var lines []string
+	scanner := bufio.NewScanner(strings.NewReader(sqlDump))
+	for scanner.Scan() {
+		line := scanner.Text()
+		// match exact ID or index. Could extend this to be more precise.
+		if strings.Contains(line, target) {
+			lines = append(lines, line, "\n")
 		}
 	}
-
-	// 3. ComponentMaps (optional, can be many)
-	var maps []ComponentMap
-	if err := models.DBManager.Table("component_maps").
-		Where("index = ?", index).Find(&maps).Error; err == nil {
-		for _, m := range maps {
-			insertSql = append(insertSql, util.GenerateInsertSQLFromStruct("component_maps", m))
-		}
-	}
-
-	// 4. Return as SQL text
-	c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(strings.Join(insertSql, "\n\n")))
+	return lines
 }

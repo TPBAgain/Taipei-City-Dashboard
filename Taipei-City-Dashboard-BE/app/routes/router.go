@@ -185,6 +185,6 @@ func configureTestRoutes() {
 		testRoutes.GET("/", controllers.TestGet)
 		testRoutes.GET("/:index", controllers.DumpTableHandler)
 		testRoutes.GET("/component/:index", controllers.DumpComponentHandler)
+		testRoutes.POST("/upload", controllers.UploadSQLFileHandler)
 	}
-
 }

@@ -11,7 +11,7 @@ services:
     command: ["npm", "install"]
 
   dashboard-be-init-manager:
-    image: golang:${GOLANG_IMAGE_TAG:-latest}
+    image: golang:1.23.0-alpine
     container_name: dashboard-be-init-manager
     environment:
       DASHBOARD_DEFAULT_USERNAME: ${DASHBOARD_DEFAULT_USERNAME}
@@ -32,7 +32,7 @@ services:
     # command: ["sleep","600000"]
 
   dashboard-be-init-dashboard:
-    image: golang:${GOLANG_IMAGE_TAG:-latest}
+    image: golang:1.23.0-alpine
     container_name: dashboard-be-init-dashboard
     environment:
       DB_DASHBOARD_HOST: ${DB_DASHBOARD_HOST:-postgres-data}

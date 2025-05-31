@@ -11,6 +11,7 @@ Developed By Taipei Urban Intelligence Center 2023-2024
 package initial
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -44,7 +45,7 @@ func initDashboardConfigs() {
 		return
 	}
 
-	err = executeSQLFile(global.PostgresManager, filePath)
+	err = ExecuteSQLFile(global.PostgresManager, filePath)
 	if err != nil {
 		logs.FError("error executing SQL file: %s", err)
 	}
@@ -144,7 +145,7 @@ func InitSampleCityData() {
 	}
 	logs.FInfo("import file name: %s", filePath)
 
-	err = executeSQLFile(global.PostgresDashboard, filePath)
+	err = ExecuteSQLFile(global.PostgresDashboard, filePath)
 	if err != nil {
 		logs.FError("error executing SQL file: %s", err)
 	}
@@ -165,13 +166,30 @@ func checkPostgreSQLClient() error {
 }
 
 // ExecuteSQLFile executes SQL file using psql
-func executeSQLFile(dbConfig global.DatabaseConfig, filePath string) error {
-	cmd := exec.Command("psql", "-h", dbConfig.Host, "-p", dbConfig.Port, "-U", dbConfig.User, "-d", dbConfig.DBName, "-f", filePath)
-	// cmd.Stdin = strings.NewReader(dbConfig.Password + "\n")
+func ExecuteSQLFile(dbConfig global.DatabaseConfig, filePath string) error {
+	cmd := exec.Command(
+		"psql",
+		"-h", dbConfig.Host,
+		"-p", dbConfig.Port,
+		"-U", dbConfig.User,
+		"-d", dbConfig.DBName,
+		"-f", filePath,
+	)
+
+	// Provide password via environment
+	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", dbConfig.Password))
+
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("error executing psql command: %s", err)
+		return fmt.Errorf(
+			"psql failed (exit %v): %v\nstdout:\n%s\nstderr:\n%s",
+			err, err.Error(), outBuf.String(), errBuf.String(),
+		)
 	}
+
 	return nil
 }
