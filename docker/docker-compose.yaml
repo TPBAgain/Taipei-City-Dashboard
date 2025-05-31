@@ -35,7 +35,7 @@ services:
     command: ["npm", "run", "dev"]
 
   dashboard-be:
-    image: golang:${GOLANG_IMAGE_TAG:-latest}
+    image: golang:1.23.0-alpine
     container_name: dashboard-be
     restart: always
     environment:
@@ -65,7 +65,7 @@ services:
     working_dir: /opt/Taipei-City-Dashboard-BE
     ports:
       - "8088:${PORT:-8080}"
-    command: ["go", "run", "main.go"]
+    entrypoint: /bin/sh -c "apk add --no-cache postgresql-client && go run main.go"
 
 networks:
   default:
