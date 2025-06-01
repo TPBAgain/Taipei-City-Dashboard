@@ -21,6 +21,7 @@ import ReportIssue from "../components/dialogs/ReportIssue.vue";
 import DownloadData from "../components/dialogs/DownloadData.vue";
 import EmbedComponent from "../components/dialogs/EmbedComponent.vue";
 import {sub} from "three/nodes";
+import http from "../router/axios.js";
 
 const contentStore = useContentStore();
 const dialogStore = useDialogStore();
@@ -51,7 +52,13 @@ async function loadQuery(id, city) {
 }
 
 async function executeSql(id, city) {
-  await 
+  const response = await http.post(`/test/query/${id}?city=${city}`, contentStore.currentQuery,  {
+    headers: { 'Content-Type': 'text/plain' }
+  })
+  console.log(response)
+  console.log(dialogStore.moreInfoContent)
+  dialogStore.moreInfoContent[0].chart_data = response.data.data
+
 }
 
 onMounted(() => {
@@ -133,7 +140,7 @@ onMounted(() => {
         <div class="componentinfoview-content wide">
           <div :style="{ overflowY: 'scroll' }">
             <form action=""><label id="query">
-                <textarea v-html="query" v-model="contentStore.currentQuery"   style="
+                <textarea v-html="query" v-model="contentStore.currentQuery" placeholder="終於可以在正常的地方寫SQL了"   style="
     width: 100%;
     height: 300px;
     border: 1px solid #ccc;
@@ -161,29 +168,17 @@ onMounted(() => {
             </button>
             <button
                 @click="
-                loadQuery(item.id, item.city)
+                executeSql(item.id, item.city)
               "
             >
               <span>flag</span>執行
             </button>
             <button
                 @click="
-                loadQuery(item.id, item.city)
+                console.log(item)
               "
             >
               <span>flag</span>存檔
-            </button>
-            <button
-                v-if="authStore.token"
-                @click="
-                dialogStore.showReportIssue(
-                  item.id,
-                  item.index,
-                  item.name
-                )
-              "
-            >
-              <span>flag</span>回報
             </button>
             <button
                 v-if="
@@ -193,9 +188,6 @@ onMounted(() => {
                 @click="dialogStore.showDialog('downloadData')"
             >
               <span>download</span>下載
-            </button>
-            <button @click="dialogStore.showDialog('embedComponent')">
-              <span>code</span>內嵌
             </button>
           </div>
         </div>

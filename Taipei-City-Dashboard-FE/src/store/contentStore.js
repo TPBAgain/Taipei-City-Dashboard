@@ -759,7 +759,6 @@ export const useContentStore = defineStore("content", {
 			const {queryString} = response.data;
 			console.log(response)
 			this.currentQuery = queryString;
-
 		}
 	},
 	debounce: {
