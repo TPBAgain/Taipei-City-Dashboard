@@ -18,7 +18,7 @@ const {
 const dialogStore = useDialogStore();
 const authStore = useAuthStore();
 
-const loginMode = ref("tp");
+const loginMode = ref("email");
 const email = ref("");
 const password = ref("");
 
@@ -45,7 +45,7 @@ async function handleEmailLogin() {
 	}
 }
 function handleClose() {
-	loginMode.value = "tp";
+	loginMode.value = "email";
 	dialogStore.hideAllDialogs();
 }
 </script>

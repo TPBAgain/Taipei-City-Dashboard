@@ -21,7 +21,7 @@ const searchIndex = ref("");
 // Filters out components already in the dashboard
 const availableComponents = computed(() => {
 	const taken = contentStore.editDashboard.components?.map((item) => item.id) || [];
-	const available = allComponents.value?.filter(
+	const availaComponentInfoViewble = allComponents.value?.filter(
 		(item) => !taken.includes(+item.id)
 	);
 	return available;

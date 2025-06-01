@@ -18,6 +18,7 @@ import MapView from "../views/MapView.vue";
 import ComponentView from "../views/ComponentView.vue";
 import ComponentInfoView from "../views/ComponentInfoView.vue";
 import EmbedView from "../views/EmbedView.vue";
+import ComponentQueryView from "../views/ComponentQueryView.vue";
 
 const routes = [
 	{
@@ -47,7 +48,12 @@ const routes = [
 	{
 		path: "/component/:index",
 		name: "component-info",
-		component: ComponentInfoView,
+		component: ComponentQueryView,
+	},
+	{
+		path: "/component/try/:index",
+		name: "component-edit",
+		component: ComponentQueryView,
 	},
 	{
 		path: "/embed/:id/:city",
@@ -127,38 +133,39 @@ router.beforeEach((to) => {
 		) {
 			router.push("/dashboard");
 		}
-	} else if (authStore.token) {
+	} else
+	 	if (authStore.token) {
 		if (to.name === "callback") {
-			router.push("/dashboard");
+			// router.push("/dashboard");
 		}
 	}
 });
 
-// Redirects unauthenticated routes
-router.beforeEach((to) => {
-	const authStore = useAuthStore();
-	if (to.name.includes("admin")) {
-		if (!authStore.user.is_admin || !authStore.token) {
-			if (authStore.user.is_admin === false) {
-				router.push("/dashboard");
-			} else {
-				setTimeout(() => {
-					if (!authStore.user.is_admin) {
-						router.push("/dashboard");
-					}
-				}, 200);
-			}
-		}
-	} else if (to.name === "component") {
-		if (!authStore.token) {
-			router.push("/dashboard");
-		}
-	} else if (to.name === "component-info") {
-		if (!authStore.token && !authStore.isNarrowDevice) {
-			router.push("/dashboard");
-		}
-	}
-});
+// // Redirects unauthenticated routes
+// router.beforeEach((to) => {
+// 	const authStore = useAuthStore();
+// 	if (to.name.includes("admin")) {
+// 		if (!authStore.user.is_admin || !authStore.token) {
+// 			if (authStore.user.is_admin === false) {
+// 				router.push("/dashboard");
+// 			} else {
+// 				setTimeout(() => {
+// 					if (!authStore.user.is_admin) {
+// 						router.push("/dashboard");
+// 					}
+// 				}, 200);
+// 			}
+// 		}
+// 	} else if (to.name === "component") {
+// 		if (!authStore.token) {
+// 			router.push("/dashboard");
+// 		}
+// 	} else if (to.name === "component-info") {
+// 		if (!authStore.token && !authStore.isNarrowDevice) {
+// 			router.push("/dashboard");
+// 		}
+// 	}
+// });
 
 // Handles content related tasks (gets content for each route)
 router.beforeEach((to) => {

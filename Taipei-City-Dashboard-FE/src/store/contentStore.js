@@ -64,6 +64,7 @@ export const useContentStore = defineStore("content", {
 		// Stores whether an error occurred
 		error: false,
 		ws: false,
+		currentQuery: ""
 	}),
 	getters: {},
 	actions: {
@@ -753,6 +754,13 @@ export const useContentStore = defineStore("content", {
 			this.ws.send(message.inctype + ": 位於 " + message.place);
 		},
 		*/
+		async fetchQuery(component_id, city) {
+			const response = await http.get(`/test/query/${component_id}?city=${city}`)
+			const {queryString} = response.data;
+			console.log(response)
+			this.currentQuery = queryString;
+
+		}
 	},
 	debounce: {
 		favoriteComponent: 500,

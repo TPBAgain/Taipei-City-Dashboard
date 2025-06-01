@@ -66,6 +66,8 @@ for container in "${INIT_CONTAINERS[@]}"; do
   fi
 done
 
+bash ./pgadmin-wizard.sh
+
 echo "✅ All init containers finished successfully."
 
 echo "✅ [init] Done. You can now run './dev.sh'"

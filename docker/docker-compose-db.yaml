@@ -44,6 +44,8 @@ services:
       - "8889:80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+      - ./docker/pgadmin/pgpass:/pgpass
 
 networks:
   default:
